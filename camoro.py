@@ -23,7 +23,6 @@ MODULES_DIR = BASE_DIR / "modules"
 for d in (RESULTS_DIR, SESSIONS_DIR, MODULES_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
-# ensure package file
 init_py = MODULES_DIR / "__init__.py"
 if not init_py.exists():
     init_py.write_text('"""Camoro modules"""\n', encoding="utf-8")
@@ -111,17 +110,16 @@ def mode_intel() -> None:
         print(f"{C.R}مطلوب{C.N}")
         pause()
         return
-    g = InfoGatherer(u, proxy_manager=ProxyManager())
+    # Recon بلا Tor
+    g = InfoGatherer(u, proxy_manager=None)
     info = g.gather()
-    if info and info.get("exists"):
-        g.save()
-        g.display()
+    g.save()
+    g.display()
+    if info.get("exists"):
         info = ask_extra(info)
         g.info = info
         g.save()
         print(f"{C.G}[✓] تم{C.N}")
-    else:
-        print(f"{C.R}[!] فشل / الحساب غير موجود{C.N}")
     pause()
 
 
@@ -186,14 +184,14 @@ def mode_full() -> None:
         return
 
     print(f"\n{C.C}[1/3] جمع المعلومات...{C.N}")
-    g = InfoGatherer(u, proxy_manager=ProxyManager())
+    g = InfoGatherer(u, proxy_manager=None)
     info = g.gather()
-    if not info or not info.get("exists"):
-        # نستمر حتى لو فشل — نستخدم الاسم فقط
+    g.save()
+    if info.get("exists"):
+        g.display()
+    else:
         print(f"{C.Y}[!] الجمع فشل — متابعة بالحد الأدنى{C.N}")
         info = {"username": u, "exists": True}
-    else:
-        g.display()
     info = ask_extra(info)
     g.info = info
     g.save()
@@ -217,7 +215,11 @@ def mode_full() -> None:
 def mode_results() -> None:
     banner()
     print(f"{C.C}[5] النتائج{C.N}\n")
-    dirs = sorted([d for d in RESULTS_DIR.iterdir() if d.is_dir()]) if RESULTS_DIR.exists() else []
+    dirs = (
+        sorted([d for d in RESULTS_DIR.iterdir() if d.is_dir()])
+        if RESULTS_DIR.exists()
+        else []
+    )
     if not dirs:
         print("لا توجد نتائج")
         pause()
@@ -306,14 +308,14 @@ def main() -> None:
     }
     while True:
         banner()
-        print(f"  {C.C}[1]{C.N} 🔍  جمع معلومات")
-        print(f"  {C.C}[2]{C.N} 🧠  توليد كلمات مرور")
-        print(f"  {C.C}[3]{C.N} ⚡  اختبار")
-        print(f"  {C.C}[4]{C.N} 🔄  وضع كامل")
-        print(f"  {C.C}[5]{C.N} 📊  النتائج")
-        print(f"  {C.C}[6]{C.N} 🌐  Proxy/Tor")
-        print(f"  {C.C}[7]{C.N} 🔑  Sessions")
-        print(f"  {C.C}[0]{C.N} 🚪  خروج")
+        print(f"  {C.C}[1]{C.N}  جمع معلومات")
+        print(f"  {C.C}[2]{C.N}  توليد كلمات مرور")
+        print(f"  {C.C}[3]{C.N}  اختبار")
+        print(f"  {C.C}[4]{C.N}  وضع كامل")
+        print(f"  {C.C}[5]{C.N}  النتائج")
+        print(f"  {C.C}[6]{C.N}  Proxy/Tor")
+        print(f"  {C.C}[7]{C.N}  Sessions")
+        print(f"  {C.C}[0]{C.N}  خروج")
         ch = input(f"\n  {C.Y}اختيارك: {C.N}").strip()
         if ch == "0":
             print(f"{C.G}مع السلامة{C.N}")
